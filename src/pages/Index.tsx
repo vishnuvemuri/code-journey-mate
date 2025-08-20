@@ -232,7 +232,7 @@ const HomePage = ({ toggleTheme, darkMode, onGetStarted }) => {
                 <div className="container mx-auto flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                         <Code size={24} className="text-blue-500" />
-                        <span className="text-xl font-bold">SkillyHeads</span>
+                        <span className="text-xl font-bold">Skillyheads</span>
                     </div>
                     <nav className={`hidden md:flex items-center space-x-6 text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                         <a href="#features" className="hover:text-blue-500 transition-colors">Features</a>
@@ -255,7 +255,7 @@ const HomePage = ({ toggleTheme, darkMode, onGetStarted }) => {
                 <motion.section ref={heroRef} animate={heroControls} initial="hidden" variants={heroVariants} className="container mx-auto px-4 py-16 sm:py-24">
                     <div className="grid lg:grid-cols-2 gap-16 items-center">
                         <div className="text-center lg:text-left">
-                            <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>#SkillyHeads Movement</span>
+                            <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>#Skillyheads Movement</span>
                             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
                                 Master DSA & Land <br/> Your <span className="text-blue-500">Dream Job</span>
                             </h1>
@@ -290,7 +290,7 @@ const HomePage = ({ toggleTheme, darkMode, onGetStarted }) => {
                 {/* Features Section */}
                 <motion.section ref={featuresRef} animate={featuresControls} initial="hidden" variants={featuresVariants} id="features" className="container mx-auto px-4 py-24">
                      <div className="text-center mb-12">
-                        <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>#SkillyHeads</span>
+                        <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>#Skillyheads</span>
                         <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Everything You Need to <span className="text-blue-500">Succeed</span></h2>
                     </div>
                     <div className="grid md:grid-cols-3 gap-8">
@@ -314,7 +314,7 @@ const HomePage = ({ toggleTheme, darkMode, onGetStarted }) => {
                 {/* Social Proof Section */}
                 <motion.section ref={statsRef} animate={statsControls} initial="hidden" variants={statsVariants} id="stats" className="container mx-auto px-4 py-24">
                      <div className="text-center mb-12">
-                        <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>#SkillyHeads</span>
+                        <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>#Skillyheads</span>
                         <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Trusted by a <span className="text-blue-500">Growing Community</span></h2>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 text-center">
@@ -344,7 +344,7 @@ const HomePage = ({ toggleTheme, darkMode, onGetStarted }) => {
             {/* Footer */}
             <footer className={`border-t ${darkMode ? 'border-slate-700/50' : 'border-slate-200'}`}>
                 <div className={`container mx-auto px-4 py-8 text-center text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    &copy; {new Date().getFullYear()} SkillyHeads. All Rights Reserved.
+                    &copy; {new Date().getFullYear()} Skillyheads. All Rights Reserved.
                 </div>
             </footer>
         </div>
@@ -368,7 +368,7 @@ const Header = ({ user, toggleTheme, darkMode, toggleSidebar }) => {
                         <Menu size={20} />
                     </button>
                     <h1 className="text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">
-                        SkillyHeads Hub
+                        Skillyheads Hub
                     </h1>
                 </div>
                 <div className="flex items-center space-x-4">
