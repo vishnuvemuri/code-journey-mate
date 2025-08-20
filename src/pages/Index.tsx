@@ -1,9 +1,9 @@
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { 
     Search, Sun, Moon, Menu, X, User, Lock, Mail, Code, ArrowRight, PlayCircle,
     LayoutDashboard, Trophy, Users, BookOpen, Database, Link2, Layers, TreePalm, BarChart2, Zap,
-    Star, CheckCircle, Briefcase
+    Star, CheckCircle, Briefcase, PlusCircle, Upload, UserPlus, Trash2, Edit, MoreVertical, FileQuestion, UserCog
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -13,6 +13,19 @@ import {
     onAuthStateChanged,
     signOut
 } from 'firebase/auth';
+import { 
+    getFirestore, 
+    collection, 
+    onSnapshot,
+    addDoc,
+    serverTimestamp,
+    query,
+    orderBy,
+    writeBatch,
+    doc,
+    getCountFromServer
+} from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { motion, useAnimation } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 
@@ -30,49 +43,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
+const functions = getFunctions(app);
 
-
-// --- Mock Data ---
-const dsaSheetData = [
-    // --- Arrays ---
-    { id: 'arr-1', topic: 'Arrays', difficulty: 'Easy', name: 'Find the Duplicate Number', url: 'https://leetcode.com/problems/find-the-duplicate-number/', companies: [], status: 'Not Started' },
-    { id: 'arr-2', topic: 'Arrays', difficulty: 'Easy', name: 'Sort Colors', url: 'https://leetcode.com/problems/sort-colors/', companies: [], status: 'Not Started' },
-    { id: 'arr-3', topic: 'Arrays', difficulty: 'Easy', name: 'Remove Duplicates from Sorted Array', url: 'https://leetcode.com/problems/remove-duplicates-from-sorted-array/', companies: [], status: 'Not Started' },
-    { id: 'arr-4', topic: 'Arrays', difficulty: 'Easy', name: 'Set Matrix Zeroes', url: 'https://leetcode.com/problems/set-matrix-zeroes/', companies: [], status: 'Not Started' },
-    { id: 'arr-5', topic: 'Arrays', difficulty: 'Easy', name: 'Move Zeroes', url: 'https://leetcode.com/problems/move-zeroes/', companies: ['Microsoft'], status: 'Not Started' },
-    { id: 'arr-6', topic: 'Arrays', difficulty: 'Easy', name: 'Best Time to Buy and Sell Stock', url: 'https://leetcode.com/problems/best-time-to-buy-and-sell-stock/', companies: ['Microsoft', 'Amazon'], status: 'Not Started' },
-    { id: 'arr-7', topic: 'Arrays', difficulty: 'Easy', name: 'Chocolate Distribution Problem', url: 'https://www.geeksforgeeks.org/chocolate-distribution-problem/', companies: ['Microsoft', 'Amazon'], status: 'Not Started' },
-    { id: 'arr-8', topic: 'Arrays', difficulty: 'Easy', name: 'Two Sum', url: 'https://leetcode.com/problems/two-sum/', companies: ['Amazon'], status: 'Not Started' },
-    { id: 'arr-9', topic: 'Arrays', difficulty: 'Easy', name: 'Best Time to Buy and Sell Stock II', url: 'https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/', companies: [], status: 'Not Started' },
-    { id: 'arr-10', topic: 'Arrays', difficulty: 'Medium', name: 'Subarray Sums Divisible by K', url: 'https://leetcode.com/problems/subarray-sums-divisible-by-k/', companies: [], status: 'Not Started' },
-    { id: 'arr-11', topic: 'Arrays', difficulty: 'Medium', name: 'Find All Duplicates in an Array', url: 'https://leetcode.com/problems/find-all-duplicates-in-an-array/', companies: ['Goldman Sachs'], status: 'Not Started' },
-    { id: 'arr-12', topic: 'Arrays', difficulty: 'Medium', name: 'Container With Most Water', url: 'https://leetcode.com/problems/container-with-most-water/', companies: ['Goldman Sachs', 'Amazon'], status: 'Not Started' },
-    { id: 'arr-13', topic: 'Arrays', difficulty: 'Medium', name: '3Sum', url: 'https://leetcode.com/problems/3sum/', companies: ['Goldman Sachs', 'Amazon'], status: 'Not Started' },
-    { id: 'arr-14', topic: 'Arrays', difficulty: 'Medium', name: '4Sum', url: 'https://leetcode.com/problems/4sum/', companies: [], status: 'Not Started' },
-    { id: 'arr-15', topic: 'Arrays', difficulty: 'Medium', name: 'Maximum Points You Can Obtain from Cards', url: 'https://leetcode.com/problems/maximum-points-you-can-obtain-from-cards/', companies: [], status: 'Not Started' },
-    { id: 'arr-16', topic: 'Arrays', difficulty: 'Medium', name: 'Subarray Sum Equals K', url: 'https://leetcode.com/problems/subarray-sum-equals-k/', companies: [], status: 'Not Started' },
-    { id: 'arr-17', topic: 'Arrays', difficulty: 'Medium', name: 'Spiral Matrix', url: 'https://leetcode.com/problems/spiral-matrix/', companies: [], status: 'Not Started' },
-    { id: 'arr-18', topic: 'Arrays', difficulty: 'Medium', name: 'Word Search', url: 'https://leetcode.com/problems/word-search/', companies: ['Microsoft'], status: 'Not Started' },
-    { id: 'arr-19', topic: 'Arrays', difficulty: 'Medium', name: 'Jump Game', url: 'https://leetcode.com/problems/jump-game/', companies: ['Amazon'], status: 'Not Started' },
-    { id: 'arr-20', topic: 'Arrays', difficulty: 'Medium', name: 'Merge Sorted Array', url: 'https://leetcode.com/problems/merge-sorted-array/', companies: ['Intuit'], status: 'Not Started' },
-    { id: 'arr-21', topic: 'Arrays', difficulty: 'Medium', name: 'Majority Element', url: 'https://leetcode.com/problems/majority-element/', companies: ['Intuit'], status: 'Not Started' },
-    { id: 'arr-22', topic: 'Arrays', difficulty: 'Medium', name: 'Reverse Pairs', url: 'https://leetcode.com/problems/reverse-pairs/', companies: ['Intuit'], status: 'Not Started' },
-    { id: 'arr-23', topic: 'Arrays', difficulty: 'Hard', name: 'Largest Rectangle in Histogram', url: 'https://leetcode.com/problems/largest-rectangle-in-histogram/', companies: ['Microsoft'], status: 'Not Started' },
-    { id: 'str-1', topic: 'Strings', difficulty: 'Easy', name: 'Valid Parentheses', url: 'https://leetcode.com/problems/valid-parentheses/', companies: [], status: 'Not Started' },
-    { id: 'str-2', topic: 'Strings', difficulty: 'Easy', name: 'Print all duplicates in the input string', url: 'https://www.geeksforgeeks.org/print-all-the-duplicates-in-the-input-string/', companies: ['Amazon'], status: 'Not Started' },
-    { id: 'str-3', topic: 'Strings', difficulty: 'Easy', name: 'Implement strStr()', url: 'https://leetcode.com/problems/implement-strstr/', companies: [], status: 'Not Started' },
-    { id: 'str-4', topic: 'Strings', difficulty: 'Easy', name: 'Longest Common Prefix', url: 'https://leetcode.com/problems/longest-common-prefix/', companies: ['Intuit'], status: 'Not Started' },
-    { id: 'str-5', topic: 'Strings', difficulty: 'Medium', name: 'Integer to Roman', url: 'https://leetcode.com/problems/integer-to-roman/', companies: ['Amazon'], status: 'Not Started' },
-    { id: 'str-6', topic: 'Strings', difficulty: 'Medium', name: 'Generate Parentheses', url: 'https://leetcode.com/problems/generate-parentheses/', companies: ['Amazon'], status: 'Not Started' },
-    { id: 'str-7', topic: 'Strings', difficulty: 'Medium', name: 'Simplify Path', url: 'https://leetcode.com/problems/simplify-path/', companies: ['Intuit', 'Amazon'], status: 'Not Started' },
-    { id: 'str-8', topic: 'Strings', difficulty: 'Hard', name: 'Minimum Window Substring', url: 'https://leetcode.com/problems/minimum-window-substring/', companies: ['Goldman Sachs'], status: 'Not Started' },
-    { id: 'dp-1', topic: 'Dynamic Programming', difficulty: 'Easy', name: 'Climbing Stairs', url: 'https://leetcode.com/problems/climbing-stairs', companies: [], status: 'Not Started' },
-    { id: 'dp-2', topic: 'Dynamic Programming', difficulty: 'Easy', name: 'Maximum Product Subarray', url: 'https://leetcode.com/problems/maximum-product-subarray/', companies: [], status: 'Not Started' },
-    { id: 'dp-3', topic: 'Dynamic Programming', difficulty: 'Medium', name: 'Coin Change', url: 'https://leetcode.com/problems/coin-change/', companies: [], status: 'Not Started' },
-    { id: 'dp-4', topic: 'Dynamic Programming', difficulty: 'Medium', name: 'Longest Increasing Subsequence', url: 'https://leetcode.com/problems/longest-increasing-subsequence/', companies: ['Microsoft', 'Goldman Sachs'], status: 'Not Started' },
-    { id: 'dp-5', topic: 'Dynamic Programming', difficulty: 'Hard', name: 'Trapping Rain Water', url: 'https://leetcode.com/problems/trapping-rain-water/', companies: ['Goldman Sachs'], status: 'Not Started' },
-    { id: 'dp-6', topic: 'Dynamic Programming', difficulty: 'Hard', name: 'Burst Balloons', url: 'https://leetcode.com/problems/burst-balloons/', companies: [], status: 'Not Started' },
-];
+// --- Admin Configuration ---
+const ADMIN_UID = "3RIYRmCsD7f9oMcixR98i2VHNFu2"; // IMPORTANT: Replace with your Firebase User ID.
 
 // --- Helper Functions & Constants ---
 const getStatusColor = (status, darkMode) => {
@@ -92,62 +67,36 @@ const getDifficultyColor = (difficulty) => {
     }
 };
 
-const topics = [...new Set(dsaSheetData.map(p => p.topic))];
-const companies = ['Microsoft', 'Adobe', 'Goldman Sachs', 'Intuit', 'Amazon'];
+const topics = ["Arrays", "Strings", "Linked Lists", "Stacks & Queues", "Trees", "Graphs", "Dynamic Programming"];
+const companies = ['Microsoft', 'Adobe', 'Goldman Sachs', 'Intuit', 'Amazon', 'Google', 'Meta'];
 const difficulties = ['Easy', 'Medium', 'Hard'];
 const statuses = ['Not Started', 'In Progress', 'Completed'];
 
 // --- Animation Hook ---
 const useScrollAnimation = () => {
     const controls = useAnimation();
-    const [ref, inView] = useInView({
-        triggerOnce: true,
-        threshold: 0.1,
-    });
-
-    React.useEffect(() => {
-        if (inView) {
-            controls.start('visible');
-        }
-    }, [controls, inView]);
-
-    const animationVariants = {
-        hidden: { opacity: 0, y: 50 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
-    };
-
+    const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
+    React.useEffect(() => { if (inView) { controls.start('visible'); } }, [controls, inView]);
+    const animationVariants = { hidden: { opacity: 0, y: 50 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
     return { ref, controls, animationVariants };
 };
 
 
 // --- UI Components ---
 
-const LoginModal = ({ toggleTheme, darkMode, onClose }) => {
+const LoginModal = ({ onClose }) => {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [error, setError] = React.useState('');
-    const [isLoginView, setIsLoginView] = React.useState(true);
     const [loading, setLoading] = React.useState(false);
 
     const handleAuthAction = async (e) => {
         e.preventDefault();
-        if (!email || !password) {
-            setError('Please enter both email and password.');
-            return;
-        }
-        if (!/\S+@\S+\.\S+/.test(email)) {
-            setError('Please enter a valid email address.');
-            return;
-        }
+        if (!email || !password) { setError('Please enter both email and password.'); return; }
         setError('');
         setLoading(true);
-
         try {
-            if (isLoginView) {
-                await signInWithEmailAndPassword(auth, email, password);
-            } else {
-                await createUserWithEmailAndPassword(auth, email, password);
-            }
+            await signInWithEmailAndPassword(auth, email, password);
             onClose();
         } catch (err) {
             setError(err.message.replace('Firebase: ', ''));
@@ -160,14 +109,10 @@ const LoginModal = ({ toggleTheme, darkMode, onClose }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
             <div className="relative w-full max-w-md">
                 <div className="w-full p-8 bg-slate-100/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-2xl backdrop-blur-lg">
-                    <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
-                        <X size={24} />
-                    </button>
+                    <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"><X size={24} /></button>
                     <div className="text-center mb-8">
-                         <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">
-                            {isLoginView ? 'Welcome Back' : 'Create Your Account'}
-                        </h1>
-                        <p className="text-slate-600 dark:text-slate-400 mt-2">{isLoginView ? 'Login to continue your journey.' : 'Create an account to begin.'}</p>
+                         <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">Welcome Back</h1>
+                        <p className="text-slate-600 dark:text-slate-400 mt-2">Login to continue your journey.</p>
                     </div>
                     <form onSubmit={handleAuthAction} className="space-y-6">
                         <div className="relative">
@@ -180,15 +125,9 @@ const LoginModal = ({ toggleTheme, darkMode, onClose }) => {
                         </div>
                         {error && <p className="text-red-500 dark:text-red-400 text-sm text-center">{error}</p>}
                         <button type="submit" disabled={loading} className="w-full px-4 py-3 text-sm font-semibold text-white rounded-lg bg-blue-600 hover:bg-blue-500 transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.5)] disabled:bg-blue-400">
-                            {loading ? 'Processing...' : (isLoginView ? 'Login' : 'Sign Up')}
+                            {loading ? 'Processing...' : 'Login'}
                         </button>
                     </form>
-                     <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-4">
-                        {isLoginView ? "Don't have an account?" : "Already have an account?"}
-                        <button onClick={() => setIsLoginView(!isLoginView)} className="font-semibold text-blue-500 hover:underline ml-1">
-                            {isLoginView ? 'Sign Up' : 'Login'}
-                        </button>
-                    </p>
                 </div>
             </div>
         </div>
@@ -232,7 +171,7 @@ const HomePage = ({ toggleTheme, darkMode, onGetStarted }) => {
                 <div className="container mx-auto flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                         <Code size={24} className="text-blue-500" />
-                        <span className="text-xl font-bold">Skillyheads</span>
+                        <span className="text-xl font-bold">SkillyHeads</span>
                     </div>
                     <nav className={`hidden md:flex items-center space-x-6 text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                         <a href="#features" className="hover:text-blue-500 transition-colors">Features</a>
@@ -255,7 +194,7 @@ const HomePage = ({ toggleTheme, darkMode, onGetStarted }) => {
                 <motion.section ref={heroRef} animate={heroControls} initial="hidden" variants={heroVariants} className="container mx-auto px-4 py-16 sm:py-24">
                     <div className="grid lg:grid-cols-2 gap-16 items-center">
                         <div className="text-center lg:text-left">
-                            <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>#Skillyheads Movement</span>
+                            <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>#SkillyHeads Movement</span>
                             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
                                 Master DSA & Land <br/> Your <span className="text-blue-500">Dream Job</span>
                             </h1>
@@ -290,7 +229,7 @@ const HomePage = ({ toggleTheme, darkMode, onGetStarted }) => {
                 {/* Features Section */}
                 <motion.section ref={featuresRef} animate={featuresControls} initial="hidden" variants={featuresVariants} id="features" className="container mx-auto px-4 py-24">
                      <div className="text-center mb-12">
-                        <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>#Skillyheads</span>
+                        <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>#SkillyHeads</span>
                         <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Everything You Need to <span className="text-blue-500">Succeed</span></h2>
                     </div>
                     <div className="grid md:grid-cols-3 gap-8">
@@ -314,7 +253,7 @@ const HomePage = ({ toggleTheme, darkMode, onGetStarted }) => {
                 {/* Social Proof Section */}
                 <motion.section ref={statsRef} animate={statsControls} initial="hidden" variants={statsVariants} id="stats" className="container mx-auto px-4 py-24">
                      <div className="text-center mb-12">
-                        <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>#Skillyheads</span>
+                        <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>#SkillyHeads</span>
                         <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Trusted by a <span className="text-blue-500">Growing Community</span></h2>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 text-center">
@@ -344,14 +283,14 @@ const HomePage = ({ toggleTheme, darkMode, onGetStarted }) => {
             {/* Footer */}
             <footer className={`border-t ${darkMode ? 'border-slate-700/50' : 'border-slate-200'}`}>
                 <div className={`container mx-auto px-4 py-8 text-center text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    &copy; {new Date().getFullYear()} Skillyheads. All Rights Reserved.
+                    &copy; {new Date().getFullYear()} SkillyHeads. All Rights Reserved.
                 </div>
             </footer>
         </div>
     );
 };
 
-const Header = ({ user, toggleTheme, darkMode, toggleSidebar }) => {
+const Header = ({ user, toggleTheme, darkMode, toggleSidebar, onAdminClick, isAdminView }) => {
     const handleLogout = async () => {
         try {
             await signOut(auth);
@@ -368,10 +307,15 @@ const Header = ({ user, toggleTheme, darkMode, toggleSidebar }) => {
                         <Menu size={20} />
                     </button>
                     <h1 className="text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">
-                        Skillyheads Hub
+                        SkillyHeads Hub
                     </h1>
                 </div>
                 <div className="flex items-center space-x-4">
+                    {user?.uid === ADMIN_UID && (
+                         <button onClick={onAdminClick} className={`px-3 py-2 text-sm font-semibold rounded-lg border transition-colors ${isAdminView ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-slate-500/10 text-slate-400 border-slate-500/20'}`}>
+                            {isAdminView ? 'User View' : 'Admin'}
+                         </button>
+                    )}
                     <button onClick={toggleTheme} className={`p-2 rounded-lg transition-all duration-300 ${darkMode ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-200 hover:bg-slate-300'}`}>
                         {darkMode ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
@@ -516,10 +460,192 @@ const Dashboard = ({ progressData, activityData, darkMode }) => (
     </div>
 );
 
+const AdminDashboard = ({ darkMode }) => {
+    const [activeTab, setActiveTab] = React.useState('addQuestion');
+    
+    return (
+         <div className="p-4 md:p-6">
+            <h2 className={`text-3xl font-bold mb-6 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>Admin Dashboard</h2>
+            <div className="flex border-b border-slate-200 dark:border-slate-700 mb-6">
+                <button onClick={() => setActiveTab('addQuestion')} className={`py-2 px-4 text-sm font-medium ${activeTab === 'addQuestion' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-slate-500'}`}>Add Question</button>
+                <button onClick={() => setActiveTab('bulkUpload')} className={`py-2 px-4 text-sm font-medium ${activeTab === 'bulkUpload' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-slate-500'}`}>Bulk Upload</button>
+                <button onClick={() => setActiveTab('manageUsers')} className={`py-2 px-4 text-sm font-medium ${activeTab === 'manageUsers' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-slate-500'}`}>Manage Users</button>
+            </div>
+            <div>
+                {activeTab === 'addQuestion' && <AddQuestionForm darkMode={darkMode} />}
+                {activeTab === 'bulkUpload' && <BulkUploadForm darkMode={darkMode} />}
+                {activeTab === 'manageUsers' && <UserManagementForm darkMode={darkMode} />}
+            </div>
+        </div>
+    );
+};
+
+const AddQuestionForm = ({ darkMode }) => {
+    const [newProblem, setNewProblem] = React.useState({ name: '', url: '', topic: topics[0], difficulty: difficulties[0], companies: [] });
+    const [message, setMessage] = React.useState<{type: string; text: string} | null>(null);
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setNewProblem(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleCompanyChange = (company) => {
+        setNewProblem(prev => ({ ...prev, companies: prev.companies.includes(company) ? prev.companies.filter(c => c !== company) : [...prev.companies, company] }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!newProblem.name || !newProblem.url) {
+            setMessage({ type: 'error', text: 'Please fill in all fields.' });
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'questions'), { ...newProblem, createdAt: serverTimestamp() });
+            setMessage({ type: 'success', text: 'Success! Question added.' });
+            setNewProblem({ name: '', url: '', topic: topics[0], difficulty: difficulties[0], companies: [] });
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Error: Could not add question.' });
+        } finally {
+            setTimeout(() => setMessage(null), 3000);
+        }
+    };
+
+    return (
+        <div className={`p-6 rounded-xl border ${darkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white/50 border-slate-200'}`}>
+            <h3 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>Add Single Question</h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Form fields */}
+                <input name="name" value={newProblem.name} onChange={handleInputChange} placeholder="Problem Name" className="w-full p-2 rounded bg-slate-200 dark:bg-slate-700" />
+                <input name="url" value={newProblem.url} onChange={handleInputChange} placeholder="Problem URL" className="w-full p-2 rounded bg-slate-200 dark:bg-slate-700" />
+                <select name="topic" value={newProblem.topic} onChange={handleInputChange} className="w-full p-2 rounded bg-slate-200 dark:bg-slate-700">{topics.map(t => <option key={t} value={t}>{t}</option>)}</select>
+                <select name="difficulty" value={newProblem.difficulty} onChange={handleInputChange} className="w-full p-2 rounded bg-slate-200 dark:bg-slate-700">{difficulties.map(d => <option key={d} value={d}>{d}</option>)}</select>
+                <div>
+                    <label className="block text-sm font-medium mb-2">Companies (Optional)</label>
+                    <div className="flex flex-wrap gap-2">{companies.map(c => (<button type="button" key={c} onClick={() => handleCompanyChange(c)} className={`px-3 py-1 text-sm rounded-full ${newProblem.companies.includes(c) ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-700'}`}>{c}</button>))}</div>
+                </div>
+                <button type="submit" className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-500 flex items-center"><PlusCircle size={18} className="mr-2"/> Add Question</button>
+                {message && <p className={`text-sm mt-4 ${message.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>{message.text}</p>}
+            </form>
+        </div>
+    );
+};
+
+const BulkUploadForm = ({ darkMode }) => {
+    const [file, setFile] = React.useState(null);
+    const [message, setMessage] = React.useState<{type: string; text: string} | null>(null);
+
+    const handleFileChange = (e) => {
+        setFile(e.target.files[0]);
+    };
+
+    const handleUpload = async () => {
+        if (!file) {
+            setMessage({ type: 'error', text: 'Please select a CSV file to upload.' });
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const csv = event.target.result as string;
+                const lines = csv.split('\n').filter(line => line.trim());
+                const headers = lines[0].split(',').map(h => h.trim());
+                const requiredHeaders = ['name', 'url', 'topic', 'difficulty', 'companies'];
+                
+                if (!requiredHeaders.every(h => headers.includes(h))) {
+                    setMessage({ type: 'error', text: 'CSV headers must be: name, url, topic, difficulty, companies' });
+                    return;
+                }
+
+                const batch = writeBatch(db);
+                const questionsCollection = collection(db, 'questions');
+
+                lines.slice(1).forEach(line => {
+                    const values = line.split(',');
+                    const problemData = {
+                        name: values[headers.indexOf('name')].trim(),
+                        url: values[headers.indexOf('url')].trim(),
+                        topic: values[headers.indexOf('topic')].trim(),
+                        difficulty: values[headers.indexOf('difficulty')].trim(),
+                        companies: values[headers.indexOf('companies')].trim().split(';').filter(c => c),
+                        createdAt: serverTimestamp(),
+                    };
+                    const newDocRef = doc(questionsCollection);
+                    batch.set(newDocRef, problemData);
+                });
+
+                await batch.commit();
+                setMessage({ type: 'success', text: `Successfully uploaded ${lines.length - 1} questions.` });
+            } catch (error) {
+                console.error("Error during bulk upload: ", error);
+                setMessage({ type: 'error', text: 'An error occurred during upload.' });
+            } finally {
+                setTimeout(() => setMessage(null), 5000);
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    return (
+         <div className={`p-6 rounded-xl border ${darkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white/50 border-slate-200'}`}>
+            <h3 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>Bulk Upload Questions</h3>
+            <div className="space-y-4">
+                <input type="file" accept=".csv" onChange={handleFileChange} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                <button onClick={handleUpload} className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-500 flex items-center"><Upload size={18} className="mr-2"/> Upload CSV</button>
+                {message && <p className={`text-sm mt-4 ${message.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>{message.text}</p>}
+            </div>
+        </div>
+    );
+};
+
+const UserManagementForm = ({ darkMode }) => {
+    const [email, setEmail] = React.useState('');
+    const [password, setPassword] = React.useState('');
+    const [message, setMessage] = React.useState<{type: string; text: string} | null>(null);
+    
+    // NOTE: Listing and deleting users requires the Firebase Admin SDK, which cannot be run securely on the client.
+    // This component only includes the "Create User" functionality.
+
+    const handleCreateUser = async (e) => {
+        e.preventDefault();
+        if (!email || !password) {
+            setMessage({ type: 'error', text: 'Please provide email and password.' });
+            return;
+        }
+        try {
+            const createUser = httpsCallable(functions, 'createUser');
+            const result = await createUser({ email, password });
+            setMessage({ type: 'success', text: (result.data as any).result });
+            setEmail('');
+            setPassword('');
+        } catch (error) {
+            setMessage({ type: 'error', text: error.message });
+        } finally {
+            setTimeout(() => setMessage(null), 5000);
+        }
+    };
+
+    return (
+        <div className={`p-6 rounded-xl border ${darkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white/50 border-slate-200'}`}>
+            <h3 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>Create New User</h3>
+            <form onSubmit={handleCreateUser} className="space-y-4">
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="New User Email" className="w-full p-2 rounded bg-slate-200 dark:bg-slate-700" />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Temporary Password" className="w-full p-2 rounded bg-slate-200 dark:bg-slate-700" />
+                <button type="submit" className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-500 flex items-center"><UserPlus size={18} className="mr-2"/> Create User</button>
+                {message && <p className={`text-sm mt-4 ${message.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>{message.text}</p>}
+            </form>
+            <div className="mt-6 p-4 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm">
+                <strong>Note:</strong> User listing, updating, and deleting requires a secure backend with the Firebase Admin SDK and is not available in this client-side view.
+            </div>
+        </div>
+    );
+};
+
+
 // --- Main App Component ---
 export default function App() {
-    const [problems, setProblems] = React.useState(dsaSheetData);
-    const [filteredProblems, setFilteredProblems] = React.useState(dsaSheetData);
+    const [problems, setProblems] = React.useState([]);
+    const [filteredProblems, setFilteredProblems] = React.useState([]);
     const [activeFilters, setActiveFilters] = React.useState({ topic: 'All', difficulty: 'All', company: 'All', status: 'All', search: '' });
     const [darkMode, setDarkMode] = React.useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
@@ -527,6 +653,7 @@ export default function App() {
     const [loading, setLoading] = React.useState(true);
     const [activityData, setActivityData] = React.useState({});
     const [showLoginModal, setShowLoginModal] = React.useState(false);
+    const [isAdminView, setIsAdminView] = React.useState(false);
 
     React.useEffect(() => {
         document.documentElement.classList.toggle('dark', darkMode);
@@ -540,6 +667,22 @@ export default function App() {
         return unsubscribe; // Cleanup subscription on unmount
     }, []);
 
+    React.useEffect(() => {
+        if (currentUser) {
+            const q = query(collection(db, "questions"), orderBy("createdAt", "desc"));
+            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                const questionsFromDb = [];
+                querySnapshot.forEach((doc) => {
+                    questionsFromDb.push({ id: doc.id, ...doc.data(), status: 'Not Started' });
+                });
+                setProblems(questionsFromDb);
+            }, (error) => {
+                console.error("Firestore snapshot error:", error);
+            });
+            return () => unsubscribe();
+        }
+    }, [currentUser]);
+
     const progressData = React.useMemo(() => {
         const completed = problems.filter(p => p.status === 'Completed').length;
         const pending = problems.length - completed;
@@ -550,7 +693,7 @@ export default function App() {
         let result = problems;
         if (activeFilters.topic !== 'All') result = result.filter(p => p.topic === activeFilters.topic);
         if (activeFilters.difficulty !== 'All') result = result.filter(p => p.difficulty === activeFilters.difficulty);
-        if (activeFilters.company !== 'All') result = result.filter(p => p.companies.includes(activeFilters.company));
+        if (activeFilters.company !== 'All' && activeFilters.company) result = result.filter(p => p.companies && p.companies.includes(activeFilters.company));
         if (activeFilters.status !== 'All') result = result.filter(p => p.status === activeFilters.status);
         if (activeFilters.search) result = result.filter(p => p.name.toLowerCase().includes(activeFilters.search.toLowerCase()));
         setFilteredProblems(result);
@@ -593,22 +736,28 @@ export default function App() {
                     darkMode={darkMode} 
                     onGetStarted={() => setShowLoginModal(true)} 
                 />
-                {showLoginModal && <LoginModal toggleTheme={() => setDarkMode(!darkMode)} darkMode={darkMode} onClose={() => setShowLoginModal(false)} />}
+                {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
             </>
         );
     }
 
     return (
         <div className={`min-h-screen font-sans ${darkMode ? 'dark bg-slate-900 text-slate-200' : 'bg-slate-100 text-slate-800'}`}>
-            <Header user={currentUser} toggleTheme={() => setDarkMode(!darkMode)} darkMode={darkMode} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+            <Header user={currentUser} toggleTheme={() => setDarkMode(!darkMode)} darkMode={darkMode} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} onAdminClick={() => setIsAdminView(!isAdminView)} isAdminView={isAdminView} />
             <div className="container mx-auto flex">
-                <Sidebar activeFilters={activeFilters} handleFilterChange={handleFilterChange} isOpen={isSidebarOpen} darkMode={darkMode} />
-                <main className="flex-1 p-4 md:p-6">
-                    <Dashboard progressData={progressData} activityData={activityData} darkMode={darkMode} />
-                    <div className="mt-8">
-                        <h2 className={`text-3xl font-bold mb-4 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>DSA Problem Sheet</h2>
-                        <ProblemTable problems={filteredProblems} onStatusChange={handleStatusChange} darkMode={darkMode} />
-                    </div>
+                {isAdminView && currentUser.uid === ADMIN_UID ? null : <Sidebar activeFilters={activeFilters} handleFilterChange={handleFilterChange} isOpen={isSidebarOpen} darkMode={darkMode} />}
+                <main className="flex-1">
+                    {isAdminView && currentUser.uid === ADMIN_UID ? (
+                        <AdminDashboard darkMode={darkMode} />
+                    ) : (
+                        <>
+                            <Dashboard progressData={progressData} activityData={activityData} darkMode={darkMode} />
+                            <div className="mt-8 px-4 md:px-6">
+                                <h2 className={`text-3xl font-bold mb-4 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>DSA Problem Sheet</h2>
+                                <ProblemTable problems={filteredProblems} onStatusChange={handleStatusChange} darkMode={darkMode} />
+                            </div>
+                        </>
+                    )}
                 </main>
             </div>
         </div>
